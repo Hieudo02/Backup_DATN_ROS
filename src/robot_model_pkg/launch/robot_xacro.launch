@@ -1,0 +1,73 @@
+<?xml version="1.0"?>
+<launch>
+
+<!-- Arguments: arg is just a variable in a xml/launch file that has no specific relation to ROS-->
+<!-- Parameter: param in a launch file will load a single parameter to the parameter server -->
+<!-- rosparam: used to load entire yaml files of parameters to the parameter server -->
+
+    <include file="$(find gazebo_ros)/launch/empty_world.launch">
+        <arg name="world_name" value="$(find robot_model_pkg)/maps/map1.world"/>
+        <arg name="paused" value="false"/>
+        <arg name="use_sim_time" value="true"/>
+        <arg name="gui" value="true"/>
+        <arg name="headless" value="false"/>
+        <arg name="recording" value="false"/>
+        <arg name="debug" value="false"/>
+    </include>
+
+    <param name="robot_description" command="$(find xacro)/xacro '$(find robot_model_pkg)/urdf/robot.urdf.xacro'"/>
+
+    <rosparam command="load" file="$(find robot_model_pkg)/config/diffdrive.yaml" ns="robot_diff_drive_controller" />
+
+    <!-- Load Gazebo control parameters -->
+    <rosparam command="load" file="$(find robot_model_pkg)/config/gazebo_ros_control_params.yaml"/>
+    <!-- Load joint_state_controller config -->
+    <rosparam command="load" file="$(find robot_model_pkg)/config/joints.yaml" ns="mobile_robot_joint_state_controller"/>
+
+    <!-- <node name="robot_hardware_interface" pkg="mobile_robot_autonomous_navigation" type="mobile_robot_hardware_interface" output="screen">
+        <remap from="/mobile_robot/mobile_base_controller/cmd_vel" to="/cmd_vel"/>
+    </node> -->
+
+<!-- Spawn robot to Gazebo -->
+    <!-- Robot pose -->
+    <arg name="x_pos" default="0.0"/> 
+    <arg name="y_pos" default="0.0"/>
+    <arg name="z_pos" default="0.0"/>
+    <arg name="roll" default="0.0"/>
+    <arg name="pitch" default="0.0"/>
+    <arg name="yaw" default="0.0"/>
+
+    <node name="urdf_spwaner" pkg="gazebo_ros" type="spawn_model" respawn="false" output="screen" args="-urdf -model robot22 -param robot_description 
+        -x $(arg x_pos) -y $(arg y_pos) -z $(arg z_pos) -R $(arg roll) -P $(arg pitch) -Y $(arg yaw)"/>
+
+
+<!-- Spawn robot to Rviz -->
+    
+    <!-- Fake joint value -->
+    <!-- <node name="joint_state_publisher_gui" pkg="joint_state_publisher_gui" type="joint_state_publisher_gui"/> -->
+    <!-- <node name="joint_state_publisher" pkg="joint_state_publisher" type="joint_state_publisher">
+        <param name="/use_gui" value="false"/>
+        <rosparam param="/source_list">/tf</rosparam>
+    </node> -->
+
+    <!-- robot_state_publisher have already run in file robot_driver.launch -->
+    <node name="robot_state_publisher" pkg="robot_state_publisher" type="robot_state_publisher"/> 
+    
+    <node name="rviz" pkg="rviz" type="rviz" args="-d $(find robot_model_pkg)/robot.rviz" required="true"/>
+
+    <node name="robot_controller_spawner" pkg="controller_manager" type="spawner" args="mobile_robot_joint_state_controller robot_diff_drive_controller --shutdown-timeout 3"/>
+
+<!-- Controller -->
+    <!-- <include file="$(find robot_teleop_control_pkg)/launch/robot_teleop_control.launch"/> -->
+    <node name="teleop_twist_keyboard" pkg="teleop_twist_keyboard" type="teleop_twist_keyboard.py" output="screen"/>
+
+<!-- MAPPING -->
+    <!-- <include file="$(find robot_mapping)/launch/mapping.launch"/> -->
+
+<!-- Navigation -->
+    <include file="$(find robot_amcl)/launch/robot_navigation.launch"/>
+
+<!-- Uart control -->
+    <node name="motorController" pkg="robot_model_pkg" type="motorController.py" output="screen"/>
+
+</launch>

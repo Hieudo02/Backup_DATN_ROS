@@ -1,0 +1,10 @@
+<?xml version="1.0"?>
+<robot xmlns:xacro="http://www.ros.org/wiki/xacro" name="my_diffbot">
+
+    <xacro:include filename="$(find robot_model_pkg)/urdf/robot_core.xacro"/>
+
+    <xacro:include filename="$(find robot_model_pkg)/urdf/material_colors.xacro"/>
+
+    <xacro:include filename="$(find robot_model_pkg)/urdf/lidar.xacro"/>
+
+</robot>

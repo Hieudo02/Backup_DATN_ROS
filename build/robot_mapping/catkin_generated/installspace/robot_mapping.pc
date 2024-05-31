@@ -1,0 +1,8 @@
+prefix=/home/hieudo/datn_navbot/install
+
+Name: robot_mapping
+Description: Description of robot_mapping
+Version: 0.0.0
+Cflags: 
+Libs: -L${prefix}/lib 
+Requires: 

@@ -1,0 +1,2 @@
+localization_data_pub:navstack_pub:robot_amcl:robot_mapping:robot_model:robot_model_pkg:rplidar_ros
+-DCATKIN_DEVEL_PREFIX=/home/hieudo/datn_navbot/devel -DCMAKE_INSTALL_PREFIX=/home/hieudo/datn_navbot/install -G Unix Makefiles

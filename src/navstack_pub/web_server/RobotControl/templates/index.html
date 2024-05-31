@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Button Click Logger</title>
+<style>
+body {
+    font-family: Arial, sans-serif;
+    background-color: #f0f0f0;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+}
+
+.container {
+    width: 90%;
+    max-width: 600px;
+    margin: 20px auto;
+    text-align: center;
+    position: relative;
+    padding: 20px;
+    border: 2px solid #87ceeb;
+    border-radius: 10px;
+    background-color: #87ceeb;
+}
+
+h1 {
+    text-align: center;
+    color: #333;
+}
+
+.section {
+    border: 2px solid #ccc;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 20px;
+    background-color: #f9f9f9;
+}
+
+.directional-button {
+    display: inline-block;
+    width: 60px;
+    height: 60px;
+    margin: 10px;
+    cursor: pointer;
+    background-color: blue;
+    border: none;
+    border-radius: 50%;
+    position: relative;
+}
+.directional-button:before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 0;
+    height: 0;
+    border-style: solid;
+    border-width: 15px 0 15px 25px;
+    border-color: transparent transparent transparent white;
+}
+.button-up:before {
+    transform: translate(-50%, -50%) rotate(-90deg);
+}
+.button-down:before {
+    transform: translate(-50%, -50%) rotate(90deg);
+}
+.button-left:before {
+    transform: translate(-50%, -50%) rotate(180deg);
+}
+.button-right:before {
+    transform: translate(-50%, -50%) rotate(0deg);
+}
+.directional-button.button-left {
+    margin-right: 80px;
+}
+.button-increase,
+.button-decrease {
+    width: 45%;
+    height: 50px;
+    margin: 10px 2%;
+    background-color: green;
+    border: none;
+    color: white;
+    font-size: 16px;
+    border-radius: 10px;
+    display: inline-block;
+}
+.button-decrease {
+    background-color: red;
+}
+
+/* Style cho phần hiển thị ảnh */
+.image-container {
+    margin-top: 20px;
+    position: relative;
+}
+.image-container img {
+    max-width: 100%;
+    height: auto;
+    display: block;
+    margin: 0 auto;
+    cursor: pointer;
+}
+#fullscreenImage {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0,0,0,0.9);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+#fullscreenImage img {
+    display: block;
+    max-width: 100%;
+    max-height: 100%;
+}
+#closeFullscreen {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: white;
+    color: black;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 5px 10px;
+    border-radius: 50%;
+}
+.marker {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background-color: red;
+    border-radius: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 1001;
+}
+</style>
+</head>
+<body>
+<div class="container">
+    <h1>Robot control interface for mapping</h1>
+    <div class="section">
+        <div class="control-section">
+            <button class="directional-button button-up" ontouchstart="startLogging('w')" onmousedown="startLogging('w')" ontouchend="stopLogging()" onmouseup="stopLogging()" onmouseleave="stopLogging()"></button><br>
+            <button class="directional-button button-left" ontouchstart="startLogging('a')" onmousedown="startLogging('a')" ontouchend="stopLogging()" onmouseup="stopLogging()" onmouseleave="stopLogging()"></button>
+            <button class="directional-button button-right" ontouchstart="startLogging('d')" onmousedown="startLogging('d')" ontouchend="stopLogging()" onmouseup="stopLogging()" onmouseleave="stopLogging()"></button><br>
+            <button class="directional-button button-down" ontouchstart="startLogging('s')" onmousedown="startLogging('s')" ontouchend="stopLogging()" onmouseup="stopLogging()" onmouseleave="stopLogging()"></button><br>
+            <button class="button-increase" onclick="logValue('e')">Speed Up</button>
+            <button class="button-decrease" onclick="logValue('r')">Speed Down</button>
+        </div>
+    </div>
+
+    <div class="section">
+        <h2>Upload Map</h2>
+        <form method="POST" enctype="multipart/form-data" id="uploadForm">
+            <input type="file" name="file" id="fileInput" accept="image/*" onchange="previewImage(event)">
+            <br>
+            Resolution (m/pixel): <input type="number" id="resolution" value="1">
+        </form>
+        <button class="button-done" ontouch="submitData()" onclick="submitData()" style="margin-top: 10px; background-color: green; color: white; padding: 10px 20px; border: none; border-radius: 10px;">Done</button>
+        <div class="image-container" id="imageContainer" style="display: none;">
+            <img id="uploadedImage">
+        </div>
+    </div>
+</div>
+
+<div id="fullscreenImage" onclick="closeFullscreen(event)">
+    <button id="closeFullscreen" onclick="closeFullscreen(event)">✓</button>
+    <img id="fullscreenImg">
+</div>
+
+<script>
+    var loggingInterval;
+    var clickedPoints = [];
+    var originalWidth, originalHeight;
+
+    function startLogging(direction) {
+        loggingInterval = setInterval(function() {
+            console.log(direction);
+            sendData(direction);
+        }, 100);
+    }
+
+    function stopLogging() {
+        clearInterval(loggingInterval);
+    }
+
+    function logValue(value) {
+        console.log(value);
+        sendData(value);
+    }
+
+    function sendData(value) {
+        fetch('/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ direction: value })
+        })
+        .then(response => console.log('Data sent:', value))
+        .catch(error => console.error('Error sending data:', error));
+    }
+
+    function previewImage(event) {
+        var fileInput = event.target;
+        var file = fileInput.files[0];
+        var uploadedImage = document.getElementById('uploadedImage');
+
+        var reader = new FileReader();
+        reader.onload = function() {
+            uploadedImage.src = reader.result;
+            document.getElementById('imageContainer').style.display = 'block';
+        };
+        reader.readAsDataURL(file);
+    }
+
+    function submitData() {
+        var form = document.getElementById('uploadForm');
+        var formData = new FormData(form);
+
+        var resolution = document.getElementById('resolution').value;
+        formData.append('resolution', resolution);
+
+        clickedPoints.forEach((point, index) => {
+            formData.append(`points[${index}][x]`, point.x);
+            formData.append(`points[${index}][y]`, point.y);
+        });
+
+        fetch('/', {
+            method: 'POST',
+            body: formData
+        })
+        .then(response => response.json())
+        .then(data => {
+            var imageContainer = document.getElementById('imageContainer');
+            var uploadedImage = document.getElementById('uploadedImage');
+            uploadedImage.src = data.url;
+            imageContainer.style.display = 'block';
+        })
+        .catch(error => console.error('Error uploading image:', error));
+    }
+
+    document.getElementById('uploadedImage').addEventListener('click', function(event) {
+        var fullscreenImage = document.getElementById('fullscreenImage');
+        var fullscreenImg = document.getElementById('fullscreenImg');
+        var uploadedImage = event.target;
+
+        fullscreenImg.src = uploadedImage.src;
+        originalWidth = uploadedImage.naturalWidth;
+        originalHeight = uploadedImage.naturalHeight;
+
+        fullscreenImage.style.display = 'flex';
+    });
+
+    function closeFullscreen(event) {
+        if (event.target.id !== 'fullscreenImg') {
+            var fullscreenImage = document.getElementById('fullscreenImage');
+            fullscreenImage.style.display = 'none';
+
+            var markers = document.querySelectorAll('.marker');
+            markers.forEach(marker => marker.remove());
+        }
+    }
+
+    document.getElementById('fullscreenImg').addEventListener('click', function(event) {
+        var imgElement = event.target;
+        var rect = imgElement.getBoundingClientRect();
+        var x = event.clientX - rect.left;
+        var y = event.clientY - rect.top;
+
+        if (x < 0 || x > rect.width || y < 0 || y > rect.height) {
+            console.log('Click is outside the image bounds');
+            return;
+        }
+
+        var resolution = parseFloat(document.getElementById('resolution').value);
+        var originalX = (x * resolution).toFixed(2);
+        var originalY = (y * resolution).toFixed(2);
+
+        clickedPoints.push({ x: originalX, y: originalY });
+        console.log('Clicked at coordinates: ', originalX, originalY);
+
+        var marker = document.createElement('div');
+        marker.className = 'marker';
+        marker.style.left = `${rect.left + x}px`;
+        marker.style.top = `${rect.top + y}px`;
+        document.getElementById('fullscreenImage').appendChild(marker);
+    });
+</script>
+</body>
+</html>
