@@ -1,5 +1,16 @@
 #!/usr/bin/env python3
 
+import threading
+
+import roslib; roslib.load_manifest('teleop_twist_keyboard')
+import rospy
+
+from geometry_msgs.msg import Twist
+
+import sys, select, termios, tty
+
+#-------------------------------------------------------
+
 from __future__ import print_function
 import rospy
 from std_msgs.msg import String
@@ -12,13 +23,9 @@ msg = """
 >> Moving around:
         w    
     a   s   d
-
 >> release the key: stop
-
 >> e/r: increase/decrease max speeds by 10%
-
->> Esc to quit
-                                                     
+>> Esc to quit                                     
                       #      #                       
                    #*          *#                    
                   #-             =#                  
@@ -44,15 +51,14 @@ msg = """
 
 print(msg)
 
-# Define velocities for each command
 velocity = {
-    'a': (0.2, -0.2),  # Turn left 
-    'w': (0.2, 0.2),   # Move forward 
-    's': (-0.2, -0.2), # Move backward 
-    'd': (-0.2, 0.2),   # Turn right 
+    'a': (0.3, -0.3),  # Turn left 
+    'w': (0.3, 0.3),   # Move forward 
+    's': (-0.3, -0.3), # Move backward 
+    'd': (-0.3, 0.3),   # Turn right 
 }
 
-max_speed = 0.2  # Initial maximum speed
+max_speed = 0.3  # Initial maximum speed
 
 def clear_last_line():
     """Clear the last line in the terminal."""
@@ -85,7 +91,7 @@ def on_press(key, pub):
 
 def on_release(key, pub):
     if hasattr(key, 'char') and key.char in velocity:
-        pub.publish("0.0,0.0")
+        pub.publish("0.0, 0.0")
     elif key == keyboard.Key.esc:
         return False
 

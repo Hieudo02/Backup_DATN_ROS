@@ -47,7 +47,7 @@
     <!-- BEGIN: Wheel Odometry Publisher -->
     <!-- Subscribe: /right_ticks, /left_ticks, /initial_2d -->
     <!-- Publish: /odom_data_euler, /odom_data_quat -->
-    <node name="ekf_odom_pub" pkg="localization_data_pub" type="ekf_odom_pub" output="screen"/>
+    <!-- <node name="ekf_odom_pub" pkg="localization_data_pub" type="ekf_odom_pub" output="screen"/> -->
     <!-- END: Wheel Odometry Publisher -->
         
 <!-- BEGIN: Extended Kalman Filter from robot_pose_ekf Node-->
@@ -98,8 +98,8 @@
     <!-- Add AMCL example for differential drive robots for Localization -->
     <!-- Subscribe: /scan, /tf, /initialpose, /map -->
     <!-- Publish: /amcl_pose, /particlecloud, /tf -->
-    <include file="$(find amcl)/examples/amcl_diff.launch"/>
-    <!-- <include file="$(find robot_amcl)/launch/amcl.launch"/> -->
+    <!-- <include file="$(find amcl)/examples/amcl_diff.launch"/> -->
+    <include file="$(find robot_amcl)/launch/amcl.launch"/>
         
 
     <!-- <include file="$(find navstack_pub)/launch/move_base.launch"/> -->
@@ -108,5 +108,6 @@
     
     <!-- Control robot using key board -->
     <!-- <node name="manualcontrol_pub_node" pkg="navstack_pub" type="pub_control.py" output="screen"/> -->
+    <!-- <node name="manualcontrol_pub_node" pkg="navstack_pub" type="custom_teleop_twist_keyboard.py" output="screen"/> -->
 
 </launch>

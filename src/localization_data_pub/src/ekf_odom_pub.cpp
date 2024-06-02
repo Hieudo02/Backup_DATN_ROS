@@ -1,19 +1,19 @@
 #include "ros/ros.h"
 #include "std_msgs/Int16.h"
+#include "std_msgs/String.h"
 #include <nav_msgs/Odometry.h>
 #include <geometry_msgs/PoseStamped.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_ros/transform_broadcaster.h>
-#include <cmath>
 #include "geometry_msgs/Twist.h"
-
-#include <iostream>
-#include <string>
-#include <chrono>
-#include <thread>
+#include <actionlib_msgs/GoalStatusArray.h>
 #include <serial/serial.h>
 
-// #define RUN_WITH_UART
+#include <cmath>
+#include <iostream>
+#include <string>
+
+#define RUN_WITH_UART
 
 #ifdef RUN_WITH_UART
 serial::Serial ser("/dev/ttyAMA0", 115200, serial::Timeout::simpleTimeout(100));
@@ -35,46 +35,24 @@ const double PI = 3.141592;
 const double WHEEL_RADIUS = 0.05; // Wheel radius in meters
 const double WHEEL_BASE = 0.3; // Center of left tire to center of right tire
 
-// Number of ticks a wheel makes moving a linear distance of 1 meter
-// This value was measured manually.
-const double TICKS_PER_METER_LEFT = 1274;
-/* 
-  Left encoder:
-    1 round: 400 ticks 
-    1 round = 2*pi*r = 2*3.14*0.05 = 0.314 (meter)
-    
-    0.314 meter -> 400 ticks
-    1 meter -> 400/0.314 = 1274 ticks
-
-  The same for right encoder:
-    1 meter -> 600/0.314 = 1911 ticks
-*/  
-const double TICKS_PER_METER_RIGHT = 1911; 
- 
-// Distance both wheels have traveled
-double distanceLeft = 0.0;
-double distanceRight = 0.0;
+const double TICKS_PER_REV_LEFT = 400; 
+const double TICKS_PER_REV_RIGHT = 600; 
  
 bool initialPoseRecieved = false;
-
-static int lastCountL = 0;
-static int lastCountR = 0;
 
 std_msgs::Int16 right_ticks_msg;
 std_msgs::Int16 left_ticks_msg;
 
 using namespace std;
 
-// Get initial_2d message from either Rviz clicks or a manual pose publisher
-void set_initial_2d(const geometry_msgs::PoseStamped &rvizClick) {
-  odomOld.pose.pose.position.x = rvizClick.pose.position.x;
-  odomOld.pose.pose.position.y = rvizClick.pose.position.y;
-  odomOld.pose.pose.orientation.z = rvizClick.pose.orientation.z;
-  initialPoseRecieved = true;
-
-  ROS_INFO("initialPoseRecieved = %s", initialPoseRecieved ? "true" : "false");
-}
-
+// Distance both wheels have traveled
+double distanceLeft = 0.0;
+double distanceRight = 0.0;
+static int lastCountL = 0;
+static int lastCountR = 0;
+const float WHEEL_CIRCUMFERENCE_LEFT = 0.314; // R = 0.05
+const float WHEEL_CIRCUMFERENCE_RIGHT = 0.314; // R = 0.05
+float checkDistanceR, checkDistanceL;
 void Calc_Left(const std_msgs::Int16& leftCount) { 
   if(leftCount.data) {
     int leftTicks = leftCount.data - lastCountL;
@@ -86,13 +64,13 @@ void Calc_Left(const std_msgs::Int16& leftCount) {
     else if (leftTicks < -10000) {
       leftTicks = 65535 - leftTicks;
     }
-    distanceLeft += static_cast<double>(leftTicks) / TICKS_PER_METER_LEFT;
+    distanceLeft = ((leftTicks * WHEEL_CIRCUMFERENCE_LEFT) / TICKS_PER_REV_LEFT);
+    checkDistanceL += distanceLeft;
   }
 
-  ROS_INFO("Distance traveled by the left wheel: %f meters", distanceLeft);
+  ROS_INFO("Distance traveled by the left wheel: %f meters", checkDistanceL);
 }
- 
-// Calculate the distance the right wheel has traveled since the last cycle
+
 void Calc_Right(const std_msgs::Int16& rightCount) {
   if(rightCount.data) {
     int rightTicks = rightCount.data - lastCountR;
@@ -104,11 +82,64 @@ void Calc_Right(const std_msgs::Int16& rightCount) {
     else if (rightTicks < -10000) {
       rightTicks = 65535 - rightTicks;
     }
-    distanceRight += static_cast<double>(rightTicks) / TICKS_PER_METER_RIGHT;
+    distanceRight = ((rightTicks * WHEEL_CIRCUMFERENCE_RIGHT) / TICKS_PER_REV_RIGHT);
+    checkDistanceR += distanceRight;
   }
     
-  ROS_INFO("Distance traveled by the right wheel: %f meters", distanceRight);
+  ROS_INFO("Distance traveled by the right wheel: %f meters", checkDistanceR);
 } 
+
+#ifdef RUN_WITH_UART
+void receiveDataFromSerial() {
+  if (ser.isOpen()) {
+    string serialData = ser.read(ser.available());
+    if (!serialData.empty()) {
+      ROS_INFO("Character read: %s", serialData.c_str());
+      
+      istringstream ss(serialData);
+      string line;
+
+      std_msgs::Int16 right_ticks_msg;
+      std_msgs::Int16 left_ticks_msg;
+
+      while (getline(ss, line)) {
+        int leftTicks = 0;
+        int rightTicks = 0;
+        if (sscanf(line.c_str(), "%dr%dl", &rightTicks, &leftTicks) == 2) {
+          right_ticks_msg.data = rightTicks;
+          Calc_Right(right_ticks_msg);
+
+          left_ticks_msg.data = leftTicks;
+          Calc_Left(left_ticks_msg);
+        } else {
+          ROS_WARN("Invalid data format: %s", line.c_str());
+        }
+      }
+    } else {
+      distanceRight = 0;
+      distanceLeft = 0;
+    }
+  } 
+}
+
+void sendUart(float velR, float velL) {
+  char message[50];
+  snprintf(message, sizeof(message), "%.2f r %.2f l", velR, velL);
+  ROS_INFO("Velocity send to STM32: %.02f %.02f", velR, velL);
+  ser.write(message);
+  ser.flush();
+}
+#endif
+
+// Get initial_2d message from either Rviz clicks or a manual pose publisher
+void set_initial_2d(const geometry_msgs::PoseStamped &rvizClick) {
+  odomOld.pose.pose.position.x = rvizClick.pose.position.x;
+  odomOld.pose.pose.position.y = rvizClick.pose.position.y;
+  odomOld.pose.pose.orientation.z = rvizClick.pose.orientation.z;
+  initialPoseRecieved = true;
+
+  ROS_INFO("initialPoseRecieved = %s", initialPoseRecieved ? "true" : "false");
+}
 
 // Publish a nav_msgs::Odometry message in quaternion format
 void publish_quat() {
@@ -227,48 +258,44 @@ void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg)
   else if (v_r < MIN_VELOCITY) v_r = MIN_VELOCITY;
 
 #ifdef RUN_WITH_UART
-  char message[50];
-  snprintf(message, sizeof(message), "%.2f r %.2f l", v_r, v_l);
-  ROS_INFO("Velocity send to STM32: %.02f %.02f", v_r, v_l);
-  ser.write(message);
-  ser.flush();
+  // char message[50];
+  // snprintf(message, sizeof(message), "%.2f r %.2f l", v_r, v_l);
+  // ROS_INFO("Velocity send to STM32: %.02f %.02f", v_r, v_l);
+  // ser.write(message);
+  // ser.flush();
+
+  sendUart(v_r, v_l);
 #endif
 }
 
-#ifdef RUN_WITH_UART
-void receiveDataFromSerial() {
-  if (ser.isOpen()) {
-    std::string serialData = ser.read(ser.available());
-    if (!serialData.empty()) {
-      ROS_INFO("Character read: %s", serialData.c_str());
+void manualControlCallback(const std_msgs::String::ConstPtr& manualVel) {
+  string data = manualVel->data;
+  istringstream ss(data);
+  string token;
 
-      std::istringstream ss(serialData);
-      std::string line;
+  float velR, velL;
 
-      std_msgs::Int16 right_ticks_msg;
-      std_msgs::Int16 left_ticks_msg;
+  if (getline(ss, token, ',')) {
+    velR = stof(token);
+  }
 
-      while (std::getline(ss, line)) {
-        int leftTicks = 0;
-        int rightTicks = 0;
+  if (getline(ss, token, ',')) {
+    velL = stof(token);
+  }
 
-        if (sscanf(line.c_str(), "%dr%dl", &rightTicks, &leftTicks) == 2) {
-          right_ticks_msg.data = rightTicks;
-          Calc_Right(right_ticks_msg);
+  ROS_INFO("velR: %f, velL: %f", velR, velL);
+  sendUart(velR, velL);
+}
 
-          left_ticks_msg.data = leftTicks;
-          Calc_Left(left_ticks_msg);
-        } else {
-          ROS_WARN("Invalid data format: %s", line.c_str());
-        }
-      }
-    } else {
-      distanceRight = 0;
-      distanceLeft = 0;
+void goalStatusCallback(const actionlib_msgs::GoalStatusArray::ConstPtr& msg) {
+  for(const auto& status : msg->status_list)
+  {
+    if(status.text == "Goal reached.")
+    {
+      ROS_INFO("Goal reached!");
     }
-  } 
+  }
 }
-#endif
 
 int main(int argc, char **argv) {
   // Set the data fields of the odometry message
@@ -293,19 +320,24 @@ int main(int argc, char **argv) {
   odom_data_pub_quat = node.advertise<nav_msgs::Odometry>("odom_data_quat", 100);
 
   ros::Subscriber subInitialPose = node.subscribe("initial_2d", 1, set_initial_2d);
-  ros::Subscriber sub = node.subscribe("cmd_vel", 1000, cmdVelCallback);
+  ros::Subscriber subCmdVel = node.subscribe("cmd_vel", 1000, cmdVelCallback);
+  ros::Subscriber subMoveBaseStatus = node.subscribe("/move_base/status", 10, goalStatusCallback);
+  ros::Subscriber subManualControl = node.subscribe("manual_control", 1, manualControlCallback);
 
   ros::Rate loop_rate(30); 
   while(ros::ok()) {
-    if(initialPoseRecieved) {
-      update_odom();
+
 #ifdef RUN_WITH_UART
     receiveDataFromSerial();
 #endif
+
+    if(initialPoseRecieved == true) {
+      update_odom();
       publish_quat();
     }
     ros::spinOnce();
     loop_rate.sleep();
+
   }
  
   return 0;
