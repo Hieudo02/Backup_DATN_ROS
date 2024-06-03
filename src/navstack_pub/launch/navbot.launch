@@ -11,7 +11,7 @@
     <!-- If we have a map, uncomment the map_to_odom -->
     <!-- odom to base_footprint transform will be provided by the robot_pose_ekf node -->
     <!-- map to odom will be provided by the AMCL -->
-    <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 map odom 30" />
+    <!-- <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 map odom 30" /> -->
 
     <!-- Map File -->
     <arg name="map_file" default="$(find navstack_pub)/maps/iotvisionlab.yaml"/>

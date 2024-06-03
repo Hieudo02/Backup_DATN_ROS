@@ -79,6 +79,8 @@ h1 {
 .directional-button.button-left {
     margin-right: 80px;
 }
+
+.button-stop,
 .button-increase,
 .button-decrease {
     width: 45%;
@@ -88,10 +90,10 @@ h1 {
     border: none;
     color: white;
     font-size: 16px;
-    border-radius: 10px;
+    border-radius: 12px;
     display: inline-block;
 }
-.button-decrease {
+.button-stop {
     background-color: red;
 }
 
@@ -149,15 +151,22 @@ h1 {
 </head>
 <body>
 <div class="container">
-    <h1>Robot control interface for mapping</h1>
+    <h1>Robot Control Interface For Mapping</h1>
     <div class="section">
         <div class="control-section">
-            <button class="directional-button button-up" ontouchstart="startLogging('w')" onmousedown="startLogging('w')" ontouchend="stopLogging()" onmouseup="stopLogging()" onmouseleave="stopLogging()"></button><br>
-            <button class="directional-button button-left" ontouchstart="startLogging('a')" onmousedown="startLogging('a')" ontouchend="stopLogging()" onmouseup="stopLogging()" onmouseleave="stopLogging()"></button>
-            <button class="directional-button button-right" ontouchstart="startLogging('d')" onmousedown="startLogging('d')" ontouchend="stopLogging()" onmouseup="stopLogging()" onmouseleave="stopLogging()"></button><br>
-            <button class="directional-button button-down" ontouchstart="startLogging('s')" onmousedown="startLogging('s')" ontouchend="stopLogging()" onmouseup="stopLogging()" onmouseleave="stopLogging()"></button><br>
+            <!-- <button class="directional-button button-up" ontouchstart="startLogging('w')" onmousedown="startLogging('w')" ontouchend="stopLogging()" onmouseup="stopLogging()" ></button><br>
+            <button class="directional-button button-left" ontouchstart="startLogging('a')" onmousedown="startLogging('a')" ontouchend="stopLogging()" onmouseup="stopLogging()" ></button>
+            <button class="directional-button button-right" ontouchstart="startLogging('d')" onmousedown="startLogging('d')" ontouchend="stopLogging()" onmouseup="stopLogging()" ></button><br>
+            <button class="directional-button button-down" ontouchstart="startLogging('x')" onmousedown="startLogging('x')" ontouchend="stopLogging()" onmouseup="stopLogging()" ></button><br> -->
+            
+            <button class="directional-button button-up" onclick="logValue('w')" ></button><br>
+            <button class="directional-button button-left" onclick="logValue('a')" ></button>
+            <button class="directional-button button-right" onclick="logValue('d')" ></button><br>
+            <button class="directional-button button-down" onclick="logValue('x')" ></button><br>
+
             <button class="button-increase" onclick="logValue('e')">Speed Up</button>
             <button class="button-decrease" onclick="logValue('r')">Speed Down</button>
+            <button class="button-stop" onclick="logValue('s')">STOP</button>
         </div>
     </div>
 
@@ -193,6 +202,7 @@ h1 {
     }
 
     function stopLogging() {
+        // logValue('s');
         clearInterval(loggingInterval);
     }
 

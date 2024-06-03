@@ -2,7 +2,7 @@
 
 from __future__ import print_function
 import threading
-import roslib;
+import roslib
 import rospy
 from std_msgs.msg import String
 import sys, select, termios, tty
@@ -11,7 +11,6 @@ msg = """
 >> Moving around:
         w    
     a   s   d
-        x
 >> q/e : increase/decrease max speeds by 10%                                                   
 
 >( ͡° ͜ʖ ͡°)> Hieuneee
