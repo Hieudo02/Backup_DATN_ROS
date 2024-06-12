@@ -1,0 +1,8 @@
+<launch>
+    <!-- <arg name="map_name" default="lab_room.yaml"> -->
+    <arg name="map_file" default="$(find navstack_pub)/maps/$(arg map_name)"/>
+    
+    <!-- Map Server -->
+    <!-- Publish: /map, /map_metadata -->
+    <node pkg="map_server" name="map_server" type="map_server" args="$(arg map_file)" />
+</launch>

@@ -1,6 +1,4 @@
 <launch>
-    <!-- <param name ="/use_sim_time" value="true"/> -->
-
 <!-- BEGIN: robot_pose_ekf package -->
     <!-- BEGIN: Transformation Configuration ... Setting Up the Relationships Between Coordinate Frames --> 
     <!-- x y z roll pitch yaw parent_name child_name frequency-->
@@ -14,15 +12,17 @@
     <!-- <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 map odom 30" /> -->
 
     <!-- Map File -->
-    <arg name="map_file" default="$(find navstack_pub)/maps/iotvisionlab.yaml"/>
+    <!-- <arg name="map_file" default="$(find navstack_pub)/maps/iotvisionlab.yaml"/> -->
     <!-- <arg name="map_file" default="$(find navstack_pub)/maps/iotvisionlab2.yaml"/> -->
     <!-- <arg name="map_file" default="$(find navstack_pub)/maps/floorplan4.yaml"/> -->
     <!-- <arg name="map_file" default="$(find navstack_pub)/maps/map.yaml"/> -->
-        
+    <!-- <arg name="map_file" default="$(find navstack_pub)/maps/lab_room.yaml"/> -->
+    <arg name="map_file" default="$(find navstack_pub)/maps/$(arg map_name)"/>
+
     <!-- Map Server -->
     <!-- Publish: /map, /map_metadata -->
+    <!-- <node pkg="map_server" name="map_server" type="map_server" args="$(arg map_file)" /> -->
     <node pkg="map_server" name="map_server" type="map_server" args="$(arg map_file)" />
-
 
 
 

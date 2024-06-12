@@ -23,7 +23,7 @@ Panels:
   - Class: rviz/Time
     Name: Time
     SyncMode: 0
-    SyncSource: ""
+    SyncSource: LaserScan
 Preferences:
   PromptSaveOnExit: true
 Toolbars:
@@ -146,7 +146,7 @@ Visualization Manager:
       Radius: 0.029999999329447746
       Shaft Diameter: 0.019999999552965164
       Shaft Length: 0.10000000149011612
-      Topic: /move_base/TrajectoryPlannerROS/local_plan
+      Topic: /move_base/DWAPlannerROS/local_plan
       Unreliable: false
       Value: true
     - Alpha: 0.699999988079071
@@ -303,7 +303,7 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/Orbit
-      Distance: 9.571830749511719
+      Distance: 7.744026184082031
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
         Stereo Focal Distance: 1
@@ -340,4 +340,4 @@ Window Geometry:
     collapsed: false
   Width: 1392
   X: 232
-  Y: 114
+  Y: 77

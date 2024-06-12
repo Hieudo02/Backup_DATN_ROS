@@ -220,3 +220,6 @@ target_link_libraries(ekf_odom_pub ${catkin_LIBRARIES})
 
 add_executable(sendUartSTM32 src/sendUartSTM32.cpp)
 target_link_libraries(sendUartSTM32 ${catkin_LIBRARIES})
+
+add_executable(sendGoal src/sendGoal.cpp)
+target_link_libraries(sendGoal ${catkin_LIBRARIES})

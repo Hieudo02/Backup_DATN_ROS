@@ -8,12 +8,14 @@
 #include "geometry_msgs/Twist.h"
 #include <actionlib_msgs/GoalStatusArray.h>
 #include <serial/serial.h>
+#include <tf/transform_datatypes.h>
+#include <vector>
 
 #include <cmath>
 #include <iostream>
 #include <string>
 
-#define RUN_WITH_UART
+// #define RUN_WITH_UART
 
 #ifdef RUN_WITH_UART
 serial::Serial ser("/dev/ttyAMA0", 115200, serial::Timeout::simpleTimeout(100));
@@ -264,7 +266,7 @@ void cmdVelCallback(const geometry_msgs::Twist::ConstPtr& msg)
   // ser.write(message);
   // ser.flush();
 
-  sendUart(v_r, v_l);
+  // sendUart(v_r, v_l);
 #endif
 }
 
@@ -284,14 +286,13 @@ void manualControlCallback(const std_msgs::String::ConstPtr& manualVel) {
   }
 
   ROS_INFO("velR: %f, velL: %f", velR, velL);
-  sendUart(velR, velL);
+  // sendUart(velR, velL);
 }
 
 void goalStatusCallback(const actionlib_msgs::GoalStatusArray::ConstPtr& msg) {
   for(const auto& status : msg->status_list)
   {
-    if(status.text == "Goal reached.")
-    {
+    if(status.text == "Goal reached.") {
       ROS_INFO("Goal reached!");
     }
   }
@@ -326,7 +327,6 @@ int main(int argc, char **argv) {
 
   ros::Rate loop_rate(30); 
   while(ros::ok()) {
-
 #ifdef RUN_WITH_UART
     receiveDataFromSerial();
 #endif

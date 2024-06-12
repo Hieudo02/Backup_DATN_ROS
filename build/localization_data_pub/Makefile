@@ -288,6 +288,21 @@ tf_generate_messages_py/fast:
 .PHONY : tf_generate_messages_py/fast
 
 # Convenience name for target.
+localization_data_pub/CMakeFiles/sendGoal.dir/rule:
+	cd /home/hieudo/datn_navbot/build && $(MAKE) -f CMakeFiles/Makefile2 localization_data_pub/CMakeFiles/sendGoal.dir/rule
+.PHONY : localization_data_pub/CMakeFiles/sendGoal.dir/rule
+
+# Convenience name for target.
+sendGoal: localization_data_pub/CMakeFiles/sendGoal.dir/rule
+
+.PHONY : sendGoal
+
+# fast build rule for target.
+sendGoal/fast:
+	cd /home/hieudo/datn_navbot/build && $(MAKE) -f localization_data_pub/CMakeFiles/sendGoal.dir/build.make localization_data_pub/CMakeFiles/sendGoal.dir/build
+.PHONY : sendGoal/fast
+
+# Convenience name for target.
 localization_data_pub/CMakeFiles/tf_generate_messages_cpp.dir/rule:
 	cd /home/hieudo/datn_navbot/build && $(MAKE) -f CMakeFiles/Makefile2 localization_data_pub/CMakeFiles/tf_generate_messages_cpp.dir/rule
 .PHONY : localization_data_pub/CMakeFiles/tf_generate_messages_cpp.dir/rule
@@ -806,6 +821,33 @@ src/rviz_click_to_2d.cpp.s:
 	cd /home/hieudo/datn_navbot/build && $(MAKE) -f localization_data_pub/CMakeFiles/rviz_click_to_2d.dir/build.make localization_data_pub/CMakeFiles/rviz_click_to_2d.dir/src/rviz_click_to_2d.cpp.s
 .PHONY : src/rviz_click_to_2d.cpp.s
 
+src/sendGoal.o: src/sendGoal.cpp.o
+
+.PHONY : src/sendGoal.o
+
+# target to build an object file
+src/sendGoal.cpp.o:
+	cd /home/hieudo/datn_navbot/build && $(MAKE) -f localization_data_pub/CMakeFiles/sendGoal.dir/build.make localization_data_pub/CMakeFiles/sendGoal.dir/src/sendGoal.cpp.o
+.PHONY : src/sendGoal.cpp.o
+
+src/sendGoal.i: src/sendGoal.cpp.i
+
+.PHONY : src/sendGoal.i
+
+# target to preprocess a source file
+src/sendGoal.cpp.i:
+	cd /home/hieudo/datn_navbot/build && $(MAKE) -f localization_data_pub/CMakeFiles/sendGoal.dir/build.make localization_data_pub/CMakeFiles/sendGoal.dir/src/sendGoal.cpp.i
+.PHONY : src/sendGoal.cpp.i
+
+src/sendGoal.s: src/sendGoal.cpp.s
+
+.PHONY : src/sendGoal.s
+
+# target to generate assembly for a file
+src/sendGoal.cpp.s:
+	cd /home/hieudo/datn_navbot/build && $(MAKE) -f localization_data_pub/CMakeFiles/sendGoal.dir/build.make localization_data_pub/CMakeFiles/sendGoal.dir/src/sendGoal.cpp.s
+.PHONY : src/sendGoal.cpp.s
+
 src/sendUartSTM32.o: src/sendUartSTM32.cpp.o
 
 .PHONY : src/sendUartSTM32.o
@@ -851,6 +893,7 @@ help:
 	@echo "... localization_data_pub_genlisp"
 	@echo "... localization_data_pub_generate_messages_lisp"
 	@echo "... tf_generate_messages_py"
+	@echo "... sendGoal"
 	@echo "... tf_generate_messages_cpp"
 	@echo "... actionlib_generate_messages_py"
 	@echo "... actionlib_msgs_generate_messages_nodejs"
@@ -891,6 +934,9 @@ help:
 	@echo "... src/rviz_click_to_2d.o"
 	@echo "... src/rviz_click_to_2d.i"
 	@echo "... src/rviz_click_to_2d.s"
+	@echo "... src/sendGoal.o"
+	@echo "... src/sendGoal.i"
+	@echo "... src/sendGoal.s"
 	@echo "... src/sendUartSTM32.o"
 	@echo "... src/sendUartSTM32.i"
 	@echo "... src/sendUartSTM32.s"

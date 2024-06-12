@@ -740,6 +740,19 @@ tf_generate_messages_py/fast:
 .PHONY : tf_generate_messages_py/fast
 
 #=============================================================================
+# Target rules for targets named sendGoal
+
+# Build rule for target.
+sendGoal: cmake_check_build_system
+	$(MAKE) -f CMakeFiles/Makefile2 sendGoal
+.PHONY : sendGoal
+
+# fast build rule for target.
+sendGoal/fast:
+	$(MAKE) -f localization_data_pub/CMakeFiles/sendGoal.dir/build.make localization_data_pub/CMakeFiles/sendGoal.dir/build
+.PHONY : sendGoal/fast
+
+#=============================================================================
 # Target rules for targets named tf_generate_messages_cpp
 
 # Build rule for target.
@@ -2278,6 +2291,7 @@ help:
 	@echo "... localization_data_pub_genlisp"
 	@echo "... localization_data_pub_generate_messages_lisp"
 	@echo "... tf_generate_messages_py"
+	@echo "... sendGoal"
 	@echo "... tf_generate_messages_cpp"
 	@echo "... actionlib_generate_messages_py"
 	@echo "... actionlib_msgs_generate_messages_nodejs"

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Button Click Logger</title>
+<title>Robot Controller</title>
 <style>
 body {
     font-family: Arial, sans-serif;
@@ -12,8 +12,9 @@ body {
     padding: 0;
     display: flex;
     justify-content: center;
-    align-items: center;
+    align-items: flex-start;
     height: 100vh;
+    overflow: auto;
 }
 
 .container {
@@ -76,13 +77,13 @@ h1 {
 .button-right:before {
     transform: translate(-50%, -50%) rotate(0deg);
 }
+
 .directional-button.button-left {
     margin-right: 80px;
 }
-
-.button-stop,
 .button-increase,
-.button-decrease {
+.button-decrease,
+.button-stop {
     width: 45%;
     height: 50px;
     margin: 10px 2%;
@@ -93,6 +94,9 @@ h1 {
     border-radius: 12px;
     display: inline-block;
 }
+.button-decrease {
+    background-color: green;
+}
 .button-stop {
     background-color: red;
 }
@@ -101,6 +105,7 @@ h1 {
 .image-container {
     margin-top: 20px;
     position: relative;
+    overflow: hidden;
 }
 .image-container img {
     max-width: 100%;
@@ -116,32 +121,54 @@ h1 {
     left: 0;
     width: 100%;
     height: 100%;
-    background: rgba(0,0,0,0.9);
+    background: rgba(0,0,0,0.8);
     justify-content: center;
     align-items: center;
     z-index: 1000;
+    overflow: auto;
+}
+#fullscreenImg {
+    display: block;
+    margin: auto;
+    max-width: 100%;
+    max-height: 100%;
+    transition: transform 0.2s;
 }
 #fullscreenImage img {
     display: block;
     max-width: 100%;
     max-height: 100%;
 }
-#closeFullscreen {
-    position: absolute;
+#closeFullscreen, #zoomIn, #zoomOut {
+    position: fixed;
     top: 10px;
-    right: 10px;
+    width: 40px;
+    height: 40px;
     background: white;
     color: black;
     border: none;
-    font-size: 20px;
+    font-size: 30px;
     cursor: pointer;
-    padding: 5px 10px;
     border-radius: 50%;
+    z-index: 1001;
 }
+
+#closeFullscreen {
+    right: 20px;
+}
+
+#zoomIn {
+    right: 70px;
+}
+
+#zoomOut {
+    right: 120px;
+}
+
 .marker {
     position: absolute;
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
     background-color: red;
     border-radius: 50%;
     transform: translate(-50%, -50%);
@@ -151,22 +178,16 @@ h1 {
 </head>
 <body>
 <div class="container">
-    <h1>Robot Control Interface For Mapping</h1>
+    <h1>ROBOT CONTROLLER</h1>
     <div class="section">
         <div class="control-section">
-            <!-- <button class="directional-button button-up" ontouchstart="startLogging('w')" onmousedown="startLogging('w')" ontouchend="stopLogging()" onmouseup="stopLogging()" ></button><br>
-            <button class="directional-button button-left" ontouchstart="startLogging('a')" onmousedown="startLogging('a')" ontouchend="stopLogging()" onmouseup="stopLogging()" ></button>
-            <button class="directional-button button-right" ontouchstart="startLogging('d')" onmousedown="startLogging('d')" ontouchend="stopLogging()" onmouseup="stopLogging()" ></button><br>
-            <button class="directional-button button-down" ontouchstart="startLogging('x')" onmousedown="startLogging('x')" ontouchend="stopLogging()" onmouseup="stopLogging()" ></button><br> -->
-            
-            <button class="directional-button button-up" onclick="logValue('w')" ></button><br>
-            <button class="directional-button button-left" onclick="logValue('a')" ></button>
-            <button class="directional-button button-right" onclick="logValue('d')" ></button><br>
-            <button class="directional-button button-down" onclick="logValue('x')" ></button><br>
-
+            <button class="directional-button button-up" onclick="logValue('w')"></button><br>
+            <button class="directional-button button-left" onclick="logValue('a')"></button>
+            <button class="directional-button button-right" onclick="logValue('d')"></button><br>
+            <button class="directional-button button-down" onclick="logValue('x')"></button><br>
             <button class="button-increase" onclick="logValue('e')">Speed Up</button>
             <button class="button-decrease" onclick="logValue('r')">Speed Down</button>
-            <button class="button-stop" onclick="logValue('s')">STOP</button>
+            <button class="button-stop" onclick="logValue('s')">Stop</button>
         </div>
     </div>
 
@@ -175,24 +196,43 @@ h1 {
         <form method="POST" enctype="multipart/form-data" id="uploadForm">
             <input type="file" name="file" id="fileInput" accept="image/*" onchange="previewImage(event)">
             <br>
-            Resolution (m/pixel): <input type="number" id="resolution" value="1">
+            Resolution (m/pixel): <input type="number" id="uploadResolution" value="1">
         </form>
-        <button class="button-done" ontouch="submitData()" onclick="submitData()" style="margin-top: 10px; background-color: green; color: white; padding: 10px 20px; border: none; border-radius: 10px;">Done</button>
+        <button class="button-done" onclick="sendUploadedMapData()" style="margin-top: 10px; background-color: green; color: white; padding: 10px 20px; border: none; border-radius: 10px;">Done</button>
         <div class="image-container" id="imageContainer" style="display: none;">
             <img id="uploadedImage">
         </div>
     </div>
-</div>
 
-<div id="fullscreenImage" onclick="closeFullscreen(event)">
-    <button id="closeFullscreen" onclick="closeFullscreen(event)">✓</button>
-    <img id="fullscreenImg">
+    <div class="section">
+        <h2>Select Map</h2>
+        <select id="imageSelector" onchange="loadSelectedImage()">
+            <option value="">Select an image</option>
+            <!-- Các tùy chọn ảnh từ thư mục cố định sẽ được thêm vào đây -->
+        </select>
+        <br>
+        Resolution (m/pixel): <input type="number" id="selectResolution" value="0.05">
+        <div class="image-container" id="selectedImageContainer" style="display: none;">
+            <img id="selectedImage">
+        </div>
+        <div id="fullscreenImage" style="display: none;">
+            <div id="markerContainer" style="position: relative; width: 100%; height: 100%;">
+                <img id="fullscreenImg" style="width: 100%; height: auto;" onclick="addMarker(event)">
+            </div>
+            <button id="closeFullscreen" onclick="closeFullscreen()">✓</button>
+            <button id="zoomIn" onclick="zoomIn()">+</button>
+            <button id="zoomOut" onclick="zoomOut()">-</button>
+        </div>
+        <button id="doneButton" onclick="sendSelectedImage()" style="margin-top: 10px; background-color: green; color: white; padding: 10px 20px; border: none; border-radius: 10px;">Done</button>
+        <button id="runButton" onclick="sendRunCommand()" style="margin-top: 10px; background-color: blue; color: white; padding: 10px 20px; border: none; border-radius: 10px;">Run</button>
+    </div>
 </div>
 
 <script>
     var loggingInterval;
     var clickedPoints = [];
-    var originalWidth, originalHeight;
+    var currentScale = 1;
+    var resolution = 0.05; // Default resolution
 
     function startLogging(direction) {
         loggingInterval = setInterval(function() {
@@ -202,7 +242,7 @@ h1 {
     }
 
     function stopLogging() {
-        // logValue('s');
+        logValue('s');
         clearInterval(loggingInterval);
     }
 
@@ -236,12 +276,12 @@ h1 {
         reader.readAsDataURL(file);
     }
 
-    function submitData() {
+    function sendUploadedMapData() {
         var form = document.getElementById('uploadForm');
         var formData = new FormData(form);
 
-        var resolution = document.getElementById('resolution').value;
-        formData.append('resolution', resolution);
+        var uploadImgResolution = document.getElementById('uploadResolution').value;
+        formData.append('uploadResolution', uploadImgResolution);
 
         clickedPoints.forEach((point, index) => {
             formData.append(`points[${index}][x]`, point.x);
@@ -258,56 +298,204 @@ h1 {
             var uploadedImage = document.getElementById('uploadedImage');
             uploadedImage.src = data.url;
             imageContainer.style.display = 'block';
+            clickedPoints = []; // Reset the points after sending
         })
         .catch(error => console.error('Error uploading image:', error));
     }
 
     document.getElementById('uploadedImage').addEventListener('click', function(event) {
-        var fullscreenImage = document.getElementById('fullscreenImage');
-        var fullscreenImg = document.getElementById('fullscreenImg');
-        var uploadedImage = event.target;
-
-        fullscreenImg.src = uploadedImage.src;
-        originalWidth = uploadedImage.naturalWidth;
-        originalHeight = uploadedImage.naturalHeight;
-
-        fullscreenImage.style.display = 'flex';
+        zoomImage(event.target);
     });
 
-    function closeFullscreen(event) {
-        if (event.target.id !== 'fullscreenImg') {
-            var fullscreenImage = document.getElementById('fullscreenImage');
-            fullscreenImage.style.display = 'none';
+    document.getElementById('selectedImage').addEventListener('click', function(event) {
+        zoomImage(event.target);
+    });
 
-            var markers = document.querySelectorAll('.marker');
-            markers.forEach(marker => marker.remove());
+    function zoomImage(imgElement) {
+        var fullscreenImage = document.getElementById('fullscreenImage');
+        var fullscreenImg = document.getElementById('fullscreenImg');
+        fullscreenImg.src = imgElement.src;
+        fullscreenImg.style.transform = `scale(${currentScale})`;
+        fullscreenImg.style.transformOrigin = 'center center';
+
+        fullscreenImg.onload = function() {
+            var windowWidth = window.innerWidth;
+            var windowHeight = window.innerHeight;
+            var imgAspectRatio = fullscreenImg.naturalWidth / fullscreenImg.naturalHeight;
+            var windowAspectRatio = windowWidth / windowHeight;
+
+            if (imgAspectRatio > windowAspectRatio) {
+                fullscreenImg.style.width = '100%';
+                fullscreenImg.style.height = 'auto';
+            } else {
+                fullscreenImg.style.width = 'auto';
+                fullscreenImg.style.height = '100%';
+            }
+
+            displayMarkers();
+        };
+
+        fullscreenImage.style.display = 'flex';
+    }
+
+    function closeFullscreen() {
+        document.getElementById('fullscreenImage').style.display = 'none';
+        document.getElementById('fullscreenImg').classList.remove('zoomed');
+        currentScale = 1;
+    }
+
+    function loadImages() {
+        fetch('/list_images')
+        .then(response => response.json())
+        .then(images => {
+            var selector = document.getElementById('imageSelector');
+            images.forEach(image => {
+                var option = document.createElement('option');
+                option.value = image;
+                option.textContent = image;
+                selector.appendChild(option);
+            });
+        })
+        .catch(error => console.error('Error loading images:', error));
+    }
+
+    function loadSelectedImage() {
+        var selector = document.getElementById('imageSelector');
+        var selectedImage = selector.value;
+        resolution = document.getElementById('selectResolution').value || 0.05; // Get resolution or use default
+        if (selectedImage) {
+            fetch(`/maps/${selectedImage}`)
+            .then(response => response.blob())
+            .then(blob => {
+                var url = URL.createObjectURL(blob);
+                var img = document.getElementById('selectedImage');
+                img.src = url;
+                document.getElementById('selectedImageContainer').style.display = 'block';
+            })
+            .catch(error => console.error('Error loading selected image:', error));
         }
     }
 
-    document.getElementById('fullscreenImg').addEventListener('click', function(event) {
-        var imgElement = event.target;
+    function addMarker(event) {
+        resolution = document.getElementById('selectResolution').value || 0.05; // Get resolution or use default
+        var imgElement = document.getElementById('fullscreenImg');
         var rect = imgElement.getBoundingClientRect();
-        var x = event.clientX - rect.left;
-        var y = event.clientY - rect.top;
+        var naturalWidth = imgElement.naturalWidth;
+        var naturalHeight = imgElement.naturalHeight;
 
-        if (x < 0 || x > rect.width || y < 0 || y > rect.height) {
-            console.log('Click is outside the image bounds');
+        var scaleX = naturalWidth / rect.width;
+        var scaleY = naturalHeight / rect.height;
+
+        var x = ((event.clientX - rect.left) * scaleX);
+        var y = ((event.clientY - rect.top) * scaleY);
+
+        // Điều chỉnh tọa độ sao cho tâm ảnh là (0, 0)
+        var adjustedX = ((naturalWidth / 2) - x) * resolution;
+        var adjustedY = (y - (naturalHeight / 2)) * resolution;
+
+        // Kiểm tra xem click có nằm trong biên ảnh không
+        if (x < 0 || x > naturalWidth || y < 0 || y > naturalHeight) {
+            console.log('Click nằm ngoài biên ảnh');
             return;
         }
 
-        var resolution = parseFloat(document.getElementById('resolution').value);
-        var originalX = (x * resolution).toFixed(2);
-        var originalY = (y * resolution).toFixed(2);
+        var point = { x: adjustedX.toFixed(2), y: adjustedY.toFixed(2) };
 
-        clickedPoints.push({ x: originalX, y: originalY });
-        console.log('Clicked at coordinates: ', originalX, originalY);
+        if (!clickedPoints.some(p => p.x === point.x && p.y === point.y)) {
+            clickedPoints.push(point);
+            displayMarkers();
+        }
+    }
 
+    function displayMarkers() {
+        var imgElement = document.getElementById('fullscreenImg');
+        var rect = imgElement.getBoundingClientRect();
+        var scaleX = rect.width / imgElement.naturalWidth;
+        var scaleY = rect.height / imgElement.naturalHeight;
+
+        document.querySelectorAll('.marker').forEach(marker => marker.remove());
+
+        clickedPoints.forEach(point => {
+            // Điều chỉnh lại tọa độ về hệ tọa độ ảnh
+            var imgX = ((imgElement.naturalWidth / 2) - (parseFloat(point.x) / resolution)) * (1 / scaleX);
+            var imgY = ((parseFloat(point.y) / resolution) + (imgElement.naturalHeight / 2)) * (1 / scaleY);
+
+            displayMarker(rect.left + ((imgElement.naturalWidth / 2) - (parseFloat(point.x) / resolution)) * scaleX, rect.top + ((parseFloat(point.y) / resolution) + imgElement.naturalHeight / 2) * scaleY);
+        });
+    }
+
+    function displayMarker(clientX, clientY) {
         var marker = document.createElement('div');
         marker.className = 'marker';
-        marker.style.left = `${rect.left + x}px`;
-        marker.style.top = `${rect.top + y}px`;
-        document.getElementById('fullscreenImage').appendChild(marker);
+        marker.style.left = `${clientX}px`;
+        marker.style.top = `${clientY}px`;
+        document.getElementById('markerContainer').appendChild(marker);
+    }
+
+    function zoomIn() {
+        currentScale += 1;
+        var imgElement = document.getElementById('fullscreenImg');
+        imgElement.style.transform = `scale(${currentScale})`;
+        setTimeout(displayMarkers, 200);
+    }
+    
+    function zoomOut() {
+        currentScale = Math.max(1, currentScale - 1);
+        var imgElement = document.getElementById('fullscreenImg');
+        imgElement.style.transform = `scale(${currentScale})`;
+        setTimeout(displayMarkers, 200);
+    }
+    
+    document.getElementById('fullscreenImg').addEventListener('click', function(event) {
+        addMarker(event);
     });
+
+    function sendSelectedImage() {
+        var selector = document.getElementById('imageSelector');
+        var selectedImage = selector.value;
+        var resolution = document.getElementById('selectResolution').value || 0.05; // Get resolution or use default
+
+        fetch('/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+                selected_image: selectedImage,
+                resolution: resolution
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Selected image sent:', data);
+        })
+        .catch(error => console.error('Error sending selected image:', error));
+    }
+
+    function sendRunCommand() {
+        fetch('/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ 
+                command: 'g',
+                points: clickedPoints
+            })
+        })
+        .then(response => response.json())
+        .then(data => {
+            console.log('Run command sent:', data);
+            clickedPoints = []; // Reset the points after sending
+            document.querySelectorAll('.marker').forEach(marker => marker.remove()); // Remove markers from UI
+        })
+        .catch(error => console.error('Error sending run command:', error));
+    }
+
+    window.onload = function() {
+        loadImages();
+    };
+
 </script>
 </body>
 </html>
